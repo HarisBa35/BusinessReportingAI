@@ -1,0 +1,95 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "AI Poslovni Izvještaji";
+}
+
+<div class="container py-4">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold text-primary">AI Asistent za Poslovno Izvještavanje</h1>
+        <p class="lead text-muted">Postavite pitanje prirodnim jezikom, a asistent će generisati SQL, validirati ga i kreirati izvještaj.</p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="post">
+                <div class="mb-3">
+                    <label for="UserPrompt" class="form-label fw-semibold">Vaš upit prirodnim jezikom:</label>
+                    <div class="input-group">
+                        <input type="text" asp-for="UserPrompt" class="form-control form-control-lg" 
+                               placeholder="npr. 'Prikaži ukupnu prodaju po artiklima sortirano opadajuće' ili 'Koja je prodaja artikla ThinkPad?'" required />
+                        <button class="btn btn-primary px-4" type="submit">Generiši Izvještaj</button>
+                    </div>
+                </div>
+                <div class="form-text">
+                    Podržani primjeri: <em>"Daj mi sve kupce iz Sarajeva"</em>, <em>"Koliki je ukupan promet u martu 2024?"</em>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger shadow-sm" role="alert">
+            <h5 class="alert-heading"><i class="bi bi-shield-x"></i> Upozorenje / Greška</h5>
+            <p class="mb-0">@Model.ErrorMessage</p>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.GeneratedSql))
+    {
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info bg-opacity-10 text-info-emphasis d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Generisani SQL upit (Validiran)</span>
+                <span class="badge bg-secondary">Vrijeme obrade: @Model.ExecutionTimeMs ms</span>
+            </div>
+            <div class="card-body bg-light">
+                <pre class="mb-0"><code>@Model.GeneratedSql</code></pre>
+            </div>
+        </div>
+    }
+
+    @if (Model.ReportData != null)
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-success">Rezultati Izvještaja</h5>
+                <span class="badge bg-success">@Model.ReportData.Rows.Count red(ova)</span>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.ReportData.Rows.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    @foreach (System.Data.DataColumn col in Model.ReportData.Columns)
+                                    {
+                                        <th>@col.ColumnName</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (System.Data.DataRow row in Model.ReportData.Rows)
+                                {
+                                    <tr>
+                                        @foreach (var item in row.ItemArray)
+                                        {
+                                            <td>@(item != null && item != DBNull.Value ? item.ToString() : "-")</td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-4 text-center text-muted">
+                        Upit je uspješno izvršen, ali nema podataka za tražene kriterije.
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
